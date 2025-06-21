@@ -142,7 +142,7 @@ with st.expander("📁 Ver imagens com deteções detalhadas"):
         for i, classe in enumerate(["femea", "macho", "mosca"]):
             img_path = BASE_DIR / "detections_output" / f"{row['Nome da imagem']}_det_{classe}.jpg"
             if img_path.exists():
-                cols[i].image(str(img_path), caption=classe.capitalize(), use_column_width=True)
+                cols[i].image(str(img_path), caption=classe.capitalize(), use_container_width=True)
             else:
                 cols[i].write(f"🔍 Sem imagem de {classe}")
 
