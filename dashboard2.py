@@ -46,6 +46,11 @@ with st.sidebar:
     if len(data_range) == 2:
         inicio, fim = data_range
         df = df[(df["Data imagem"].dt.date >= inicio) & (df["Data imagem"].dt.date <= fim)]
+        
+    if st.button("🔄 Recarregar Dashboard"):
+        st.cache_data.clear()
+        st.experimental_rerun()
+
 
 # 📈 Curva de voo + Alerta de risco elevado
 st.subheader("📈 Curva de Voo (Capturas por Dia)")
