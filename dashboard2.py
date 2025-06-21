@@ -23,7 +23,7 @@ except:
         pass  # fallback
 
 # Carregar dados
-@st.cache_data(ttl=43200)
+@st.cache_data(ttl=60)
 def carregar_dados():
     df = pd.read_csv(BASE_DIR / "results.csv", dtype=str)
     for col in ["Nº femea", "Nº macho", "Nº mosca"]:
@@ -46,13 +46,6 @@ with st.sidebar:
     if len(data_range) == 2:
         inicio, fim = data_range
         df = df[(df["Data imagem"].dt.date >= inicio) & (df["Data imagem"].dt.date <= fim)]
-
-st.sidebar.markdown("### ⚙️ Opções")
-if st.sidebar.button("🔄 Recarregar agora"):
-    st.cache_data.clear()
-    st.experimental_rerun()
-
-
 
 # 📈 Curva de voo + Alerta de risco elevado
 st.subheader("📈 Curva de Voo (Capturas por Dia)")
