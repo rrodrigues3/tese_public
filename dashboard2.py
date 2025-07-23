@@ -93,7 +93,7 @@ st.altair_chart(
     use_container_width=True
 )
 
-# 📋 Deteções Diárias
+# 📋 Capturas Diárias
 st.subheader("📋 Deteções Diárias")
 st.dataframe(df_daily.rename(columns={
     "Nº femea dia": "Nº femea",
