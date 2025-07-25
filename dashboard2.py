@@ -8,7 +8,7 @@ from datetime import timedelta
 
 # Setup da página
 st.set_page_config(page_title="Dashboard Mosca da Azeitona", layout="wide")
-st.title("🪰 Dashboard - Detecção da Mosca da Azeitona")
+st.title("🪰 Dashboard - Capturas da Mosca da Azeitona")
 
 # Diretório base
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
@@ -23,6 +23,7 @@ except:
         pass  # fallback
 
 # Carregar dados
+    
 @st.cache_data(ttl=60)
 def carregar_dados():
     df = pd.read_csv(BASE_DIR / "results.csv", dtype=str)
@@ -30,6 +31,8 @@ def carregar_dados():
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
     df["Data imagem"] = pd.to_datetime(df["Data imagem"], errors="coerce")
     df["Localização"] = df["Localização"].fillna("Desconhecida")
+    df = df.sort_values("Data imagem", ascending=False)
+
     return df
 
 df = carregar_dados()
