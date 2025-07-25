@@ -96,10 +96,10 @@ st.altair_chart(
     use_container_width=True
 )
 
-# 📋 Capturas Diárias
+# 📋 Deteções Diárias
 st.subheader("📋 Deteções Diárias")
 df_daily_sorted = df_daily.sort_values("Data", ascending=False)
-st.dataframe(df_daily.rename(columns={
+st.dataframe(df_daily_sorted.rename(columns={
     "Nº femea dia": "Nº femea",
     "Nº macho dia": "Nº macho",
     "Nº mosca dia": "Nº mosca"
