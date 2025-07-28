@@ -218,3 +218,4 @@ with st.expander("📁 Ver imagens com deteções detalhadas"):
 
 # Rodapé
 st.caption("Atualizado automaticamente a cada 12 horas · Desenvolvido por Rafael Rodrigues")
+#t
