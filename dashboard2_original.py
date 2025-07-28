@@ -5,7 +5,6 @@ import altair as alt
 import pathlib
 import locale
 from datetime import timedelta
-import ast
 
 # Setup da página
 st.set_page_config(page_title="Dashboard Mosca da Azeitona", layout="wide")
@@ -23,78 +22,17 @@ except:
     except:
         pass  # fallback
 
-# Funções auxiliares
-def parse_coords(coord_str):
-    try:
-        return ast.literal_eval(coord_str)
-    except:
-        return []
-
-def contar_deteccoes_novas(coord_str_atual, coords_anteriores, max_dist=30):
-    novas = 0
-    coords_atuais = parse_coords(coord_str_atual)
-
-    for cx1, cy1, cx2, cy2 in coords_atuais:
-        cx = (cx1 + cx2) / 2
-        cy = (cy1 + cy2) / 2
-        repetida = False
-
-        for coords_ant in coords_anteriores:
-            for ax1, ay1, ax2, ay2 in parse_coords(coords_ant):
-                acx = (ax1 + ax2) / 2
-                acy = (ay1 + ay2) / 2
-                dist = ((cx - acx)**2 + (cy - acy)**2)**0.5
-                if dist < max_dist:
-                    repetida = True
-                    break
-            if repetida:
-                break
-        if not repetida:
-            novas += 1
-    return novas
-
 # Carregar dados
+    
 @st.cache_data(ttl=60)
 def carregar_dados():
     df = pd.read_csv(BASE_DIR / "results.csv", dtype=str)
-
     for col in ["Nº femea", "Nº macho", "Nº mosca"]:
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
-
     df["Data imagem"] = pd.to_datetime(df["Data imagem"], errors="coerce")
     df["Localização"] = df["Localização"].fillna("Desconhecida")
-    df = df.sort_values("Data imagem", ascending=True)
-
-    # Inicializar colunas de contagem real
-    df["Nº femea real"] = 0
-    df["Nº macho real"] = 0
-    df["Nº mosca real"] = 0
-
-    for i in range(len(df)):
-        row = df.iloc[i]
-        data = row["Data imagem"]
-        placa = row["Placa ID"]
-
-        anteriores = df[
-            (df["Data imagem"] < data) &
-            (df["Placa ID"] == placa) &
-            (df["Data imagem"] >= data - pd.Timedelta(days=2))
-        ]
-
-        df.loc[df.index[i], "Nº femea real"] = contar_deteccoes_novas(
-            row.get("Coord. femea", "[]"),
-            anteriores["Coord. femea"].tolist()
-        )
-        df.loc[df.index[i], "Nº macho real"] = contar_deteccoes_novas(
-            row.get("Coord. macho", "[]"),
-            anteriores["Coord. macho"].tolist()
-        )
-        df.loc[df.index[i], "Nº mosca real"] = contar_deteccoes_novas(
-            row.get("Coord. mosca", "[]"),
-            anteriores["Coord. mosca"].tolist()
-        )
-
     df = df.sort_values("Data imagem", ascending=False)
+
     return df
 
 df = carregar_dados()
@@ -116,11 +54,11 @@ with st.sidebar:
 st.subheader("📈 Curva de Voo (Capturas por Dia)")
 
 # Agrupamento correto e cálculos diários
-df_agg = df.groupby("Data imagem")[["Nº femea real", "Nº macho real", "Nº mosca real"]].sum().sort_index()
-df_agg["Acumulado Total"] = df_agg["Nº mosca real"].cumsum()
+df_agg = df.groupby("Data imagem")[["Nº femea", "Nº macho", "Nº mosca"]].sum().sort_index()
+df_agg["Acumulado Total"] = df_agg["Nº mosca"].cumsum()
 df_agg["Nº mosca dia"] = df_agg["Acumulado Total"].diff().fillna(df_agg["Acumulado Total"]).clip(lower=0).astype(int)
-df_agg["Nº femea dia"] = df_agg["Nº femea real"].diff().fillna(df_agg["Nº femea real"]).clip(lower=0).astype(int)
-df_agg["Nº macho dia"] = df_agg["Nº macho real"].diff().fillna(df_agg["Nº macho real"]).clip(lower=0).astype(int)
+df_agg["Nº femea dia"] = df_agg["Nº femea"].diff().fillna(df_agg["Nº femea"]).clip(lower=0).astype(int)
+df_agg["Nº macho dia"] = df_agg["Nº macho"].diff().fillna(df_agg["Nº macho"]).clip(lower=0).astype(int)
 
 df_daily = df_agg[["Nº femea dia", "Nº macho dia", "Nº mosca dia", "Acumulado Total"]].copy()
 df_daily.index = df_daily.index.date
@@ -147,7 +85,7 @@ max_y = df_daily["Nº mosca dia"].max()
 
 st.altair_chart(
     alt.Chart(df_daily).mark_line(point=True).encode(
-        x=alt.X('Data:T', title='Data', axis=alt.Axis(format='%d %b')),
+        x=alt.X('Data:T', title='Data', axis=alt.Axis(format='%d %b')),  # Dia e mês em português
         y=alt.Y(
             'Nº mosca dia:Q',
             title='Nº moscas',
@@ -169,23 +107,23 @@ st.dataframe(df_daily_sorted.rename(columns={
 
 # 📊 Capturas por Classe
 st.subheader("📊 Capturas por Classe")
-capturas_classes = df[["Nº femea real", "Nº macho real", "Nº mosca real"]].sum().reset_index()
+capturas_classes = df[["Nº femea", "Nº macho", "Nº mosca"]].sum().reset_index()
 capturas_classes.columns = ["Classe", "Total"]
 st.bar_chart(capturas_classes.set_index("Classe"))
 
 # 📅 Capturas Semanais por Classe
 df["Semana"] = df["Data imagem"].dt.isocalendar().week
 st.subheader("📅 Capturas Semanais por Classe")
-st.dataframe(df.groupby("Semana")[["Nº femea real", "Nº macho real", "Nº mosca real"]].sum(), use_container_width=True)
+st.dataframe(df.groupby("Semana")[["Nº femea", "Nº macho", "Nº mosca"]].sum(), use_container_width=True)
 
 # 📆 Capturas Mensais por Classe
 df["Mês"] = df["Data imagem"].dt.month
 st.subheader("📆 Capturas Mensais por Classe")
-st.dataframe(df.groupby("Mês")[["Nº femea real", "Nº macho real", "Nº mosca real"]].sum(), use_container_width=True)
+st.dataframe(df.groupby("Mês")[["Nº femea", "Nº macho", "Nº mosca"]].sum(), use_container_width=True)
 
 # 🪧 Capturas por Placa
 st.subheader("🪧 Capturas por Placa")
-st.dataframe(df.groupby("Placa ID")[["Nº femea real", "Nº macho real", "Nº mosca real"]].sum(), use_container_width=True)
+st.dataframe(df.groupby("Placa ID")[["Nº femea", "Nº macho", "Nº mosca"]].sum(), use_container_width=True)
 
 # 🗺️ Mapa de Localizações
 st.subheader("🗺️ Mapa de Localizações")
@@ -213,7 +151,7 @@ with st.expander("📁 Ver imagens com deteções detalhadas"):
                 cols[i].write(f"🔍 Sem imagem de {classe}")
 
         st.markdown(f"**📍 Localização:** {row['Localização']}")
-        st.markdown(f"**🔢 Nº Deteções (reais):** F: {row['Nº femea real']} | M: {row['Nº macho real']} | Mo: {row['Nº mosca real']}")
+        st.markdown(f"**🔢 Nº Deteções:** F: {row['Nº femea']} | M: {row['Nº macho']} | Mo: {row['Nº mosca']}")
         st.markdown("---")
 
 # Rodapé
