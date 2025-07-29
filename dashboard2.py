@@ -26,8 +26,13 @@ except:
 # Funções auxiliares
 def parse_coords(coord_str):
     try:
-        return ast.literal_eval(coord_str)
-    except:
+        coords = ast.literal_eval(coord_str)
+        if isinstance(coords, list) and all(isinstance(c, (list, tuple)) and len(c) == 4 for c in coords):
+            return coords
+        else:
+            return []
+    except Exception as e:
+        print(f"Erro ao interpretar: {coord_str} -> {e}")
         return []
 
 def contar_deteccoes_novas(coord_str_atual, coords_anteriores, max_dist=30):
