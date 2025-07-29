@@ -4,6 +4,7 @@ import os
 import altair as alt
 import pathlib
 import locale
+import numpy as np
 from datetime import timedelta
 
 # Setup da página
@@ -22,8 +23,76 @@ except:
     except:
         pass  # fallback
 
+# Função para extrair centros das bounding boxes a partir da string do CSV
+def extrair_centros(coord_str):
+    if pd.isna(coord_str) or coord_str.strip() == "":
+        return []
+    centros = []
+    boxes = coord_str.split(";")
+    for box in boxes:
+        coords = box.strip().split(",")
+        if len(coords) == 4:
+            try:
+                x_min, y_min, x_max, y_max = map(int, coords)
+                cx = (x_min + x_max) / 2
+                cy = (y_min + y_max) / 2
+                centros.append((cx, cy))
+            except:
+                pass
+    return centros
+
+# Função para remover detecções duplicadas entre dias consecutivos (por placa e classe)
+def remover_detecoes_duplicadas(df, tolerancia_px=30):
+    df = df.sort_values(["Placa ID", "Data imagem"]).copy()
+    df["Data imagem"] = pd.to_datetime(df["Data imagem"])
+
+    # Preenche valores nulos das coord com string vazia
+    for classe in ["femea", "macho", "mosca"]:
+        df[f"Coord. {classe}"] = df[f"Coord. {classe}"].fillna("")
+
+    indices = df.index.to_list()
+
+    for i in range(1, len(indices)):
+        idx_atual = indices[i]
+        idx_anterior = indices[i - 1]
+
+        if df.at[idx_atual, "Placa ID"] != df.at[idx_anterior, "Placa ID"]:
+            # Placas diferentes, não comparar
+            continue
+
+        for classe in ["femea", "macho", "mosca"]:
+            coords_atual = extrair_centros(df.at[idx_atual, f"Coord. {classe}"])
+            coords_ant = extrair_centros(df.at[idx_anterior, f"Coord. {classe}"])
+
+            coords_filtrados = []
+            for (cx, cy) in coords_atual:
+                duplicado = False
+                for (px, py) in coords_ant:
+                    dist = np.sqrt((cx - px) ** 2 + (cy - py) ** 2)
+                    if dist <= tolerancia_px:
+                        duplicado = True
+                        break
+                if not duplicado:
+                    coords_filtrados.append((cx, cy))
+
+            # Atualizar contagem e coordenadas (reconstruir string)
+            df.at[idx_atual, f"Nº {classe}"] = len(coords_filtrados)
+
+            # Reconstruir string no formato original: "x_min,y_min,x_max,y_max; ..."
+            # Criar caixas 20x20 px centradas nos centros filtrados
+            caixas_str = []
+            tamanho = 20
+            for (cx, cy) in coords_filtrados:
+                x_min = int(cx - tamanho/2)
+                y_min = int(cy - tamanho/2)
+                x_max = int(cx + tamanho/2)
+                y_max = int(cy + tamanho/2)
+                caixas_str.append(f"{x_min},{y_min},{x_max},{y_max}")
+            df.at[idx_atual, f"Coord. {classe}"] = "; ".join(caixas_str)
+
+    return df
+
 # Carregar dados
-    
 @st.cache_data(ttl=60)
 def carregar_dados():
     df = pd.read_csv(BASE_DIR / "results.csv", dtype=str)
@@ -32,12 +101,14 @@ def carregar_dados():
     df["Data imagem"] = pd.to_datetime(df["Data imagem"], errors="coerce")
     df["Localização"] = df["Localização"].fillna("Desconhecida")
     df = df.sort_values("Data imagem", ascending=False)
-
     return df
 
 df = carregar_dados()
 
-# Filtros
+# Aplicar filtro para remover duplicados
+df = remover_detecoes_duplicadas(df)
+
+# Filtros laterais
 with st.sidebar:
     st.header("🔍 Filtros")
     
@@ -80,7 +151,7 @@ if n_alertas > st.session_state.n_alertas_vistos or not st.session_state.alerta_
             st.session_state.alerta_silenciado = True
             st.session_state.n_alertas_vistos = n_alertas
 
-# Gráfico da curva de voo com tickCount corrigido
+# Gráfico da curva de voo
 max_y = df_daily["Nº mosca dia"].max()
 
 st.altair_chart(
