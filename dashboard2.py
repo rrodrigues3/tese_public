@@ -106,12 +106,24 @@ df_daily = df_daily.reset_index().rename(columns={
 })
 
 # Alerta de risco elevado
-moscas_altas = df_daily[df_daily["Total Novas Moscas"] > 5]
-if not moscas_altas.empty:
-    st.error(f"🚨 Alerta: Detetados {len(moscas_altas)} dias com mais de 5 novas moscas registadas. Risco elevado!")
 
-# Gráfico da curva de voo
+# Força tipo float
+df_daily["Total Novas Moscas"] = df_daily["Total Novas Moscas"].astype(float)
+
+# Adiciona linha fictícia para mostrar zero
+first_date = df_daily['Data'].min() - pd.Timedelta(days=1)
+linha_zero = pd.DataFrame([{
+    'Data': first_date,
+    'Total Novas Moscas': 0,
+    'Nº Fêmeas Novas': 0,
+    'Nº Machos Novos': 0
+}])
+df_daily = pd.concat([linha_zero, df_daily], ignore_index=True)
+
+# Recalcula max_y
 max_y = df_daily["Total Novas Moscas"].max()
+
+# Gráfico
 chart = alt.Chart(df_daily).mark_line(point=True).encode(
     x=alt.X('Data:T', title='Data', axis=alt.Axis(format='%d %b')),
     y=alt.Y(
@@ -124,6 +136,7 @@ chart = alt.Chart(df_daily).mark_line(point=True).encode(
 ).properties(height=300).interactive()
 
 st.altair_chart(chart, use_container_width=True)
+
 
 
 # --- ALTERAÇÃO 4: Todas as tabelas de agregação usam os dados mestre ---
