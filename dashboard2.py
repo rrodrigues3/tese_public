@@ -26,7 +26,7 @@ except Exception:
 # Função para carregar a lista MESTRE de moscas únicas (para estatísticas)
 @st.cache_data(ttl=60)
 def carregar_dados_mestre():
-    master_file = BASE_DIR / "../tese_public/dashboard_data.xlsx"
+    master_file = BASE_DIR / "../rafael/tese_public/dashboard_data.xlsx"
     if not master_file.exists():
         st.error("Ficheiro 'dashboard_data.xlsx' não encontrado! Por favor, execute o script de processamento primeiro.")
         return pd.DataFrame()
