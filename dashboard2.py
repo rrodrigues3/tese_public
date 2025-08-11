@@ -4,6 +4,7 @@ import os
 import altair as alt
 import pathlib
 import locale
+from datetime import date
 
 # Setup da página
 st.set_page_config(page_title="Dashboard Mosca da Azeitona", layout="wide")
@@ -98,7 +99,7 @@ df_daily = df_daily.reindex(columns=['femea', 'macho', 'mosca'], fill_value=0)
 
 # Preencher datas em falta
 start_date = df_filtrado['First_Detection_Date'].dt.date.min()
-end_date = df_filtrado['First_Detection_Date'].dt.date.max()
+end_date = date.today()  # força a ir até hoje
 full_dates = pd.date_range(start=start_date, end=end_date, freq='D').date
 df_daily = df_daily.reindex(full_dates, fill_value=0)
 df_daily.index.name = "Data"
