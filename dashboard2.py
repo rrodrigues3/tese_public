@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import altair as alt
 import pathlib
-import locale
+#import locale
 from datetime import date
 
 # Setup da página
