@@ -14,13 +14,13 @@ st.title("🪰 Dashboard - Capturas da Mosca da Azeitona")
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
 
 # Definir locale para português
-try:
-    locale.setlocale(locale.LC_TIME, 'pt_PT.UTF-8')
-except Exception:
-    try:
-        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-    except Exception:
-        st.warning("Não foi possível definir o locale para Português. As datas podem aparecer em inglês.")
+#try:
+#    locale.setlocale(locale.LC_TIME, 'pt_PT.UTF-8')
+#except Exception:
+#    try:
+#        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+#    except Exception:
+#        st.warning("Não foi possível definir o locale para Português. As datas podem aparecer em inglês.")
 
 # --- ALTERAÇÃO 1: Carregar os dois ficheiros de dados ---
 
@@ -116,10 +116,10 @@ df_daily['Total Moscas'] = df_daily[['Nº Fêmeas', 'Nº Machos', 'Nº Moscas']]
 
 df_daily['Acumulado'] = df_daily['Total Moscas'].cumsum()
 
-# Alerta de risco elevado (se num dia > 5 moscas novas)
-moscas_altas = df_daily[df_daily["Total Moscas"] > 5]
+# Alerta de risco elevado (se num dia > 3 moscas novas)
+moscas_altas = df_daily[df_daily["Total Moscas"] > 3]
 if not moscas_altas.empty:
-    st.error(f"🚨 Alerta: Detetados {len(moscas_altas)} dias com mais de 5 moscas capturadas.")
+    st.error(f"🚨 Alerta: Detetados {len(moscas_altas)} dias com mais de 3 moscas capturadas.")
 
 # Gráfico da curva de voo
 max_y = df_daily["Total Moscas"].max()
@@ -146,7 +146,7 @@ st.dataframe(
 )
 
 # Capturas por Classe
-st.subheader("📊 Total de Moscas Únicas por Classe")
+st.subheader("📊 Total de Moscas por Classe")
 capturas_classes = df_filtrado['Class'].value_counts().reindex(['femea', 'macho', 'mosca'], fill_value=0).reset_index()
 capturas_classes.columns = ["Classe", "Total"]
 st.bar_chart(capturas_classes.set_index("Classe"))
@@ -183,7 +183,7 @@ if not df_mapa.empty:
 else:
     st.info("Sem coordenadas disponíveis para o mapa.")
 
-# --- ALTERAÇÃO 5: Usar o df_log para a galeria de imagens ---
+# --- ALTERAÇÃO 5: Usar o df_log para as imagens ---
 with st.expander("📁 Ver imagens de deteção por data de processamento", expanded=True):
     if not df_log.empty:
         df_log_filtrado = df_log.copy()
@@ -227,4 +227,4 @@ with st.expander("📁 Ver imagens de deteção por data de processamento", expa
 
 
 # Rodapé
-st.caption("Dashboard a ler dados de moscas únicas · Desenvolvido por Rafael Rodrigues")
+st.caption("Dashboard monitorização da mosca da azeitona · Desenvolvido por Rafael Rodrigues")
