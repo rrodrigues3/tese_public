@@ -146,7 +146,7 @@ else:
 # ---------------------------------------------------
 # Imagens apenas com deteções
 # ---------------------------------------------------
-with st.expander("📁 Ver imagens de deteção", expanded=True):
+with st.expander("📁 Ver imagens de deteção por data de processamento", expanded=True):
     if not df_mestre.empty:
         # Limpar nomes das imagens
         df_mestre['First_Detection_Image_clean'] = df_mestre['First_Detection_Image'].str.strip().str.lower()
