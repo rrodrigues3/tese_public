@@ -148,19 +148,39 @@ else:
 # ---------------------------------------------------
 with st.expander("📁 Ver imagens de deteção", expanded=True):
     if not df_mestre.empty:
+        # Limpar nomes das imagens
         df_mestre['First_Detection_Image_clean'] = df_mestre['First_Detection_Image'].str.strip().str.lower()
-        df_counts = df_mestre.groupby(['First_Detection_Image_clean', 'Class'])['Fly_ID'] \
+
+        # Agrupar por imagem e localização e contar Fly_ID por classe
+        df_counts = df_mestre.groupby(['First_Detection_Image_clean', 'Localização', 'Class'])['Fly_ID'] \
             .nunique().unstack(fill_value=0)
 
-        for img_name_clean, row in df_counts.iterrows():
-            img_name = img_name_clean
-            n_f = int(row.get('femea', 0))
-            n_m = int(row.get('macho', 0))
-            n_mo = int(row.get('mosca', 0))
+        # Resetar index para facilitar acesso
+        df_counts = df_counts.reset_index()
 
+        # Ordenar pelas mais recentes (baseado na primeira deteção)
+        df_counts = df_counts.merge(
+            df_mestre[['First_Detection_Image_clean', 'First_Detection_Date']].drop_duplicates(),
+            on='First_Detection_Image_clean',
+            how='left'
+        )
+        df_counts = df_counts.sort_values(by='First_Detection_Date', ascending=False)
+
+        # Iterar pelas imagens
+        for _, row in df_counts.iterrows():
+            img_name = row['First_Detection_Image_clean']
+            localizacao = row['Localização']
+
+            n_f = int(row.get('femea', 0) or 0)
+            n_m = int(row.get('macho', 0) or 0)
+            n_mo = int(row.get('mosca', 0) or 0)
+
+            # Exibir localização acima do nome
             st.markdown(f"### 🖼️ {img_name}")
+            st.markdown(f"**📍 Localização:** {localizacao}")
             st.markdown(f"**🔢 Deteções:** F: {n_f} | M: {n_m} | Mo: {n_mo}")
 
+            # Mostrar imagens por classe
             colunas = st.columns(3)
             for i, classe in enumerate(["femea", "macho", "mosca"]):
                 img_nome_classe = f"{img_name}_det_{classe}.jpg"
