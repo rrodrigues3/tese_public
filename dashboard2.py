@@ -168,19 +168,20 @@ with st.expander("📁 Ver imagens de deteção por data de processamento", expa
 
         # Iterar pelas imagens
         for _, row in df_counts.iterrows():
-            img_name = row['First_Detection_Image_clean']
+            img_name = row['First_Detection_Image_clean']  # usado só para carregar ficheiros
             localizacao = row['Localização']
+            img_date = row['First_Detection_Date'].date()  # <-- só a data (AAAA-MM-DD)
 
             n_f = int(row.get('femea', 0) or 0)
             n_m = int(row.get('macho', 0) or 0)
             n_mo = int(row.get('mosca', 0) or 0)
 
-            # Exibir localização acima do nome
-            st.markdown(f"### 🖼️ {img_name}")
+            # Exibir localização acima do nome (data no lugar do nome da imagem)
+            st.markdown(f"### 🖼️ {img_date}")
             st.markdown(f"**📍 Localização:** {localizacao}")
             st.markdown(f"**🔢 Deteções:** F: {n_f} | M: {n_m} | Mo: {n_mo}")
 
-            # Mostrar imagens por classe
+            # Mostrar imagens por classe (mantém o nome original para buscar ficheiros)
             colunas = st.columns(3)
             for i, classe in enumerate(["femea", "macho", "mosca"]):
                 img_nome_classe = f"{img_name}_det_{classe}.jpg"
@@ -194,6 +195,7 @@ with st.expander("📁 Ver imagens de deteção por data de processamento", expa
             st.markdown("---")
     else:
         st.info("Excel mestre vazio, não há imagens.")
+
 
 # ---------------------------------------------------
 # Rodapé
