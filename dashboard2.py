@@ -14,15 +14,6 @@ st.title("🪰 Dashboard - Capturas da Mosca da Azeitona")
 
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
 
-# Locale para datas em PT
-try:
-    locale.setlocale(locale.LC_TIME, 'pt_PT.UTF-8')
-except Exception:
-    try:
-        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-    except Exception:
-        st.warning("Não foi possível definir o locale para Português. Datas podem aparecer em inglês.")
-
 # ---------------------------------------------------
 # Carregar dados mestre
 # ---------------------------------------------------
