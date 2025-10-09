@@ -257,7 +257,7 @@ st.dataframe(placa_df, use_container_width=True)
 # ---------------------------------------------------
 # Mapa de Armadilhas
 # ---------------------------------------------------
-st.subheader("🗺️ Mapa de Armadilhas com Deteções")
+st.subheader("🗺️ Mapa Localização das Armadilhas ")
 
 if not df_localizacoes.empty:
     df_mapa = df_localizacoes[["Latitude", "Longitude"]].dropna().drop_duplicates()
